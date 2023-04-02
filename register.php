@@ -1,3 +1,57 @@
+<?php 
+session_start();
+
+if(isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true){
+    header("location: dashboard.php");
+    exit;
+}
+
+require_once("db-connect.php");
+
+$username = $password = "";
+$username_error = $password_error = "";
+
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if(empty(trim($_POST["username"]))){
+        $username_error = "Please enter your username";
+    }
+    else{
+        $username = trim($_POST["username"]);
+    }
+    if(empty(trim($_POST["password"]))){
+        $password_error = "Please enter your password";
+    }
+    else{
+        $password = trim($_POST["password"]);
+    }
+    if(empty(trim($_POST["email"]))){
+        $email_error = "Please enter your email";
+    }
+    else{
+        $email = trim($_POST["email"]);
+    }
+
+    if(empty($username_error) && empty($password_error) && empty($email_error)){
+        $query = "INSERT INTO user (username, email, password) VALUES (?, ?, ?)";
+        if($stmt = $db-> prepare($query)){
+            $stmt-> bind_param("sss", $username, $email, $password);
+            $stmt-> execute();
+            if($stmt-> execute()){
+                header("location: login.php");
+            }
+            else{
+                $login_error = "Invalid username or password";
+            }
+        }
+        else{
+            echo "Oops, something went wrong";
+        }
+        $stmt-> close();
+    }
+    $db-> close();
+}
+?>
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -35,18 +89,18 @@
 			      			<h3 class="mb-4">Register</h3>
 			      		</div>
 			      	</div>
-						<form action="#" class="signin-form">
+						<form action="<?php echo $_SERVER["PHP_SELF"]; ?>" method="POST" class="signin-form">
                             <div class="form-group mb-3">
                                 <label class="label" for="email">Email</label>
-                                <input type="email" class="form-control" placeholder="Email" required>
+                                <input type="email" name="email" id="email" class="form-control" placeholder="Email" required>
                             </div>
                             <div class="form-group mb-3">
-                                <label class="label" for="name">Username</label>
-                                <input type="text" class="form-control" placeholder="Username" required>
+                                <label class="label" for="username">Username</label>
+                                <input type="text" name="username" id="username" class="form-control" placeholder="Username" required>
                             </div>
                             <div class="form-group mb-3">
                                 <label class="label" for="password">Password</label>
-                                <input type="password" class="form-control" placeholder="Password" required>
+                                <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
                             </div>
                             <div class="form-group">
                                 <button type="submit" class="form-control btn btn-primary submit px-3">Register</button>
